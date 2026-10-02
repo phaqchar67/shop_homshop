@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Student To-Do List - จัดการการบ้านและงานที่ต้องทำ</title>
+    <!-- Google Fonts: Sarabun สำหรับภาษาไทยที่อ่านง่ายสบายตา -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ==========================================
+           CSS: การตกแต่งหน้าเว็บ (Responsive & Dark Mode)
+           ========================================== */
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #666666;
+            --border-color: #e0e0e0;
+            --primary-color: #4a90e2;
+            --primary-hover: #357abd;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            --radius: 12px;
+        }
+
+        /* โหมดมืด (Dark Mode) */
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-color: #f4f4f4;
+            --text-secondary: #b0b0b0;
+            --border-color: #444444;
+            --primary-color: #5dade2;
+            --primary-hover: #3498db;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Sarabun', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* ส่วนหัวของเว็บไซต์ */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .theme-toggle-btn {
+            background: none;
+            border: 2px solid var(--border-color);
+            color: var(--text-color);
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .theme-toggle-btn:hover {
+            border-color: var(--primary-color);
+        }
+
+        /* หน้ารายงาน (Dashboard) */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .stat-card.pending { border-left-color: var(--warning-color); }
+        .stat-card.completed { border-left-color: var(--success-color); }
+        .stat-card.urgent { border-left-color: var(--danger-color); }
+
+        .stat-card h3 {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .stat-card .number {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        /* การ์ดฟอร์มและตัวกรอง */
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+        }
+
+        .card h2 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        /* ฟอร์มเพิ่มงาน */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            color: var(--text-secondary);
+        }
+
+        input, select {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-color);
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95srem;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        /* ส่วนค้นหาและตัวกรอง */
+        .filter-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filter-section input, .filter-section select {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        /* ตารางแสดงรายการงาน */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.95rem;
+        }
+
+        th {
+            background-color: rgba(0, 0, 0, 0.02);
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        /* ป้ายบอกระดับความสำคัญและสถานะ */
+        .badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-low { background: #e8f8f5; color: #1abc9c; }
+        .badge-medium { background: #fef9e7; color: #f1c40f; }
+        .badge-high { background: #fadbd8; color: #e74c3c; }
+
+        .badge-todo { background: #ebedef; color: #7f8c8d; }
+        .badge-doing { background: #ebf5fb; color: #3498db; }
+        .badge-done { background: #e8f8f5; color: #2ecc71; text-decoration: line-through; }
+
+        /* ปุ่มจัดการในตาราง */
+        .action-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 4px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-secondary);
+        }
+
+        .footer-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <div class="container">
+        <!-- ส่วนหัวเว็บและปุ่มสลับธีม -->
+        <header>
+            <h1>📚 Smart Student To-Do List</h1>
+            <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">🌙 โหมดมืด</button>
+        </header>
+
+        <!-- หน้ารายงานสรุป (Dashboard) -->
+        <section class="dashboard">
+            <div class="stat-card">
+                <h3>งานทั้งหมด</h3>
+                <div class="number" id="totalCount">0</div>
+            </div>
+            <div class="stat-card pending">
+                <h3>ยังไม่ทำ / กำลังทำ</h3>
+                <div class="number" id="pendingCount">0</div>
+            </div>
+            <div class="stat-card completed">
+                <h3>เสร็จแล้ว</h3>
+                <div class="number" id="completedCount">0</div>
+            </div>
+            <div class="stat-card urgent">
+                <h3>งานด่วน (ครบกำหนดใน 3 วัน)</h3>
+                <div class="number" id="urgentCount">0</div>
+            </div>
+        </section>
+
+        <!-- ฟอร์มเพิ่ม/แก้ไขรายการงาน -->
+        <div class="card">
+            <h2 id="formTitle">➕ เพิ่มรายการงานใหม่</h2>
+            <form id="taskForm" onsubmit="handleFormSubmit(event)">
+                <input type="hidden" id="taskId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="taskName">ชื่องาน / การบ้าน</label>
+                        <input type="text" id="taskName" required placeholder="เช่น ทำแบบฝึกหัดคณิตศาสตร์">
+                    </div>
+                    <div class="form-group">
+                        <label for="taskSubject">รายวิชา</label>
+                        <input type="text" id="taskSubject" required placeholder="เช่น คณิตศาสตร์">
+                    </div>
+                    <div class="form-group">
+                        <label for="taskDate">วันที่ครบกำหนดส่ง</label>
+                        <input type="date" id="taskDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskPriority">ระดับความสำคัญ</label>
+                        <select id="taskPriority">
+                            <option value="ต่ำ">ต่ำ</option>
+                            <option value="ปานกลาง" selected>ปานกลาง</option>
+                            <option value="สูง">สูง</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn" id="submitBtn">บันทึกรายการ</button>
+                <button type="button" class="btn btn-danger" id="cancelBtn" style="display:none;" onclick="resetForm()">ยกเลิกการแก้ไข</button>
+            </form>
+        </div>
+
+        <!-- ส่วนค้นหาและกรองข้อมูล -->
+        <div class="card">
+            <h2>🔍 ค้นหาและกรองข้อมูล</h2>
+            <div class="filter-section">
+                <input type="text" id="searchInput" placeholder="พิมพ์ชื่องานเพื่อค้นหา..." oninput="renderTasks()">
+                <select id="filterSubject" onchange="renderTasks()">
+                    <option value="">ทุกรายวิชา</option>
+                </select>
+                <select id="filterStatus" onchange="renderTasks()">
+                    <option value="">ทุกสถานะ</option>
+                    <option value="ยังไม่ทำ">ยังไม่ทำ</option>
+                    <option value="กำลังทำ">กำลังทำ</option>
+                    <option value="เสร็จแล้ว">เสร็จแล้ว</option>
+                </select>
+                <select id="filterPriority" onchange="renderTasks()">
+                    <option value="">ทุกระดับความสำคัญ</option>
+                    <option value="ต่ำ">ต่ำ</option>
+                    <option value="ปานกลาง">ปานกลาง</option>
+                    <option value="สูง">สูง</option>
+                </select>
+            </div>
+
+            <!-- ตารางแสดงรายการ -->
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ชื่องาน</th>
+                            <th>รายวิชา</th>
+                            <th>กำหนดส่ง</th>
+                            <th>ความสำคัญ</th>
+                            <th>สถานะ</th>
+                            <th>จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="taskTableBody">
+                        <!-- รายการงานจะถูกแทรกตรงนี้ด้วย JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="footer-actions">
+                <span id="subjectSummary" style="font-size: 0.9rem; color: var(--text-secondary);"></span>
+                <button class="btn btn-danger" onclick="clearCompletedTasks()">ลบงานที่เสร็จแล้วทั้งหมด</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ==========================================
+           JavaScript: ระบบการทำงานและ Local Storage
+           ========================================== */
+
+        // ตัวแปรเก็บข้อมูลรายการงานทั้งหมด (ดึงจาก Local Storage หรือสร้างอาร์เรย์ว่าง)
+        let tasks = JSON.parse(localStorage.getItem('student_tasks')) || [];
+
+        // ฟังก์ชันเมื่อโหลดหน้าเว็บเสร็จ
+        window.onload = function() {
+            // ตั้งค่าวันที่เริ่มต้นในฟอร์มเป็นวันพรุ่งนี้
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('taskDate').valueAsDate = tomorrow;
+
+            renderTasks();
+            updateDashboard();
+        };
+
+        // ฟังก์ชันสลับธีม (Light / Dark Mode)
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const themeBtn = document.getElementById('themeToggleBtn');
+            
+            if (currentTheme === 'light') {
+                body.setAttribute('data-theme', 'dark');
+                themeBtn.textContent = '☀️ โหมดธรรมดา';
+            } else {
+                body.setAttribute('data-theme', 'light');
+                themeBtn.textContent = '🌙 โหมดมืด';
+            }
+        }
+
+        // ฟังก์ชันบันทึกข้อมูลลง Local Storage
+        function saveToLocalStorage() {
+            localStorage.setItem('student_tasks', JSON.stringify(tasks));
+        }
+
+        // ฟังก์ชันจัดการการส่งฟอร์ม (เพิ่ม หรือ แก้ไขงาน)
+        function handleFormSubmit(event) {
+            event.preventDefault(); // ป้องกันการรีเฟรชหน้าเว็บ
+
+            const id = document.getElementById('taskId').value;
+            const name = document.getElementById('taskName').value;
+            const subject = document.getElementById('taskSubject').value.trim();
+            const date = document.getElementById('taskDate').value;
+            const priority = document.getElementById('taskPriority').value;
+
+            if (id) {
+                // กรณีแก้ไขงานเดิม
+                tasks = tasks.map(task => {
+                    if (task.id == id) {
+                        return { ...task, name, subject, date, priority };
+                    }
+                    return task;
+                });
+            } else {
+                // กรณีเพิ่มงานใหม่
+                const newTask = {
+                    id: Date.now(), // ใช้ timestamp เป็น ID ที่ไม่ซ้ำกัน
+                    name,
+                    subject,
+                    date,
+                    priority,
+                    status: 'ยังไม่ทำ' // สถานะเริ่มต้น
+                };
+                tasks.push(newTask);
+            }
+
+            saveToLocalStorage();
+            resetForm();
+            renderTasks();
+            updateDashboard();
+        }
+
+        // ฟังก์ชันล้างฟอร์มและรีכולตปุ่ม
+        function resetForm() {
+            document.getElementById('taskForm').reset();
+            document.getElementById('taskId').value = '';
+            document.getElementById('formTitle').textContent = '➕ เพิ่มรายการงานใหม่';
+            document.getElementById('submitBtn').textContent = 'บันทึกรายการ';
+            document.getElementById('cancelBtn').style.display = 'none';
+
+            // ตั้งค่าวันที่กลับเป็นวันพรุ่งนี้
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('taskDate').valueAsDate = tomorrow;
+        }
+
+        // ฟังก์ชันแสดงผลรายการงานในตาราง พร้อมระบบค้นหาและกรองข้อมูล
+        function renderTasks() {
+            const tbody = document.getElementById('taskTableBody');
+            const searchKeyword = document.getElementById('searchInput').value.toLowerCase();
+            const filterSubject = document.getElementById('filterSubject').value;
+            const filterStatus = document.getElementById('filterStatus').value;
+            const filterPriority = document.getElementById('filterPriority').value;
+
+            // อัปเดตรายการรายวิชาในตัวเลือก (Dropdown)
+            updateSubjectDropdowns();
+
+            // กรองข้อมูลตามเงื่อนไขที่ผู้ใช้เลือก
+            let filteredTasks = tasks.filter(task => {
+                const matchSearch = task.name.toLowerCase().includes(searchKeyword) || task.subject.toLowerCase().includes(searchKeyword);
+                const matchSubject = filterSubject === '' || task.subject === filterSubject;
+                const matchStatus = filterStatus === '' || task.status === filterStatus;
+                const matchPriority = filterPriority === '' || task.priority === filterPriority;
+                return matchSearch && matchSubject && matchStatus && matchPriority;
+            });
+
+            // จัดเรียงงาน: เรียงตามวันที่กำหนดส่งก่อน (ใกล้สุดขึ้นก่อน)
+            filteredTasks.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            // เคลียร์ตารางเดิม
+            tbody.innerHTML = '';
+
+            if (filteredTasks.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="empty-state">ไม่พบรายการงานที่ค้นหา</td></tr>`;
+                return;
+            }
+
+            // สร้างแถวข้อมูลในตาราง
+            filteredTasks.forEach(task => {
+                const tr = document.createElement('tr');
+
+                // แปลงป้ายระดับความสำคัญ
+                let priorityClass = 'badge-medium';
+                if (task.priority === 'ต่ำ') priorityClass = 'badge-low';
+                if (task.priority === 'สูง') priorityClass = 'badge-high';
+
+                // แปลงป้ายสถานะงาน
+                let statusClass = 'badge-todo';
+                if (task.status === 'กำลังทำ') statusClass = 'badge-doing';
+                if (task.status === 'เสร็จแล้ว') statusClass = 'badge-done';
+
+                tr.innerHTML = `
+                    <td><strong>${escapeHtml(task.name)}</strong></td>
+                    <td>${escapeHtml(task.subject)}</td>
+                    <td>${formatDate(task.date)}</td>
+                    <td><span class="badge ${priorityClass}">${task.priority}</span></td>
+                    <td>
+                        <select onchange="changeStatus(${task.id}, this.value)" style="padding: 4px; font-size: 0.85rem;">
+                            <option value="ยังไม่ทำ" ${task.status === 'ยังไม่ทำ' ? 'selected' : ''}>ยังไม่ทำ</option>
+                            <option value="กำลังทำ" ${task.status === 'กำลังทำ' ? 'selected' : ''}>กำลังทำ</option>
+                            <option value="เสร็จแล้ว" ${task.status === 'เสร็จแล้ว' ? 'selected' : ''}>เสร็จแล้ว</option>
+                        </select>
+                    </td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="action-btn" title="แก้ไข" onclick="editTask(${task.id})">✏️️</button>
+                            <button class="action-btn" title="ลบ" onclick="deleteTask(${task.id})">🗑️</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ฟังก์ชันเปลี่ยนสถานะงาน
+        function changeStatus(id, newStatus) {
+            tasks = tasks.map(task => {
+                if (task.id === id) {
+                    return { ...task, status: newStatus };
+                }
+                return task;
+            });
+            saveToLocalStorage();
+            updateDashboard();
+            renderTasks();
+        }
+
+        // ฟังก์ชันเตรียมข้อมูลเพื่อแก้ไขงาน
+        function editTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (!task) return;
+
+            document.getElementById('taskId').value = ta        // ฟังก์ชันเตรียมข้อมูลเพื่อแก้ไขงาน (ต่อจากโค้ดเดิม)
+        function editTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (!task) return;
+
+            document.getElementById('taskId').value = task.id;
+            document.getElementById('taskName').value = task.name;
+            document.getElementById('taskSubject').value = task.subject;
+            document.getElementById('taskDate').value = task.date;
+            document.getElementById('taskPriority').value = task.priority;
+
+            document.getElementById('formTitle').textContent = '✏️ แก้ไขรายการงาน';
+            document.getElementById('submitBtn').textContent = 'บันทึกการแก้ไข';
+            document.getElementById('cancelBtn').style.display = 'inline-block';
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ฟังก์ชันลบงานรายรายการ
+        function deleteTask(id) {
+            if (confirm('คุณต้องการลบรายการงานนี้ใช่หรือไม่?')) {
+                tasks = tasks.filter(task => task.id !== id);
+                saveToLocalStorage();
+                renderTasks();
+                updateDashboard();
+            }
+        }
+
+        // ฟังก์ชันลบงานที่เสร็จแล้วทั้งหมด
+        function clearCompletedTasks() {
+            if (confirm('คุณต้องการลบงานที่ทำเสร็จแล้วทั้งหมดใช่หรือไม่?')) {
+                tasks = tasks.filter(task => task.status !== 'เสร็จแล้ว');
+                saveToLocalStorage();
+                renderTasks();
+                updateDashboard();
+            }
+        }
+
+        // ฟังก์ชันอัปเดตตัวเลือกรายวิชาใน Filter อัตโนมัติ
+        function updateSubjectDropdowns() {
+            const filterSubjectSelect = document.getElementById('filterSubject');
+            const currentSelected = filterSubjectSelect.value;
+            
+            // ดึงรายวิชาที่ไม่ซ้ำกัน
+            const subjects = [...new Set(tasks.map(t => t.subject))];
+
+            filterSubjectSelect.innerHTML = '<option value="">ทุกรายวิชา</option>';
+            subjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject;
+                option.textContent = subject;
+                if (subject === currentSelected) option.selected = true;
+                filterSubjectSelect.appendChild(option);
+            });
+        }
+
+        // ฟังก์ชันอัปเดต Dashboard (สถิติต่างๆ)
+        function updateDashboard() {
+            const total = tasks.length;
+            const pending = tasks.filter(t => t.status !== 'เสร็จแล้ว').length;
+            const completed = tasks.filter(t => t.status === 'เสร็จแล้ว').length;
+
+            // คำนวณงานด่วน (ครบกำหนดภายใน 3 วันข้างหน้า และยังไม่เสร็จ)
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const urgent = tasks.filter(t => {
+                if (t.status === 'เสร็จแล้ว') return false;
+                const dueDate = new Date(t.date);
+                const diffTime = dueDate - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                return diffDays >= 0 && diffDays <= 3;
+            }).length;
+
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('pendingCount').textContent = pending;
+            document.getElementById('completedCount').textContent = completed;
+            document.getElementById('urgentCount').textContent = urgent;
+
+            // สรุปจำนวนงานแยกตามรายวิชา
+            const subjectCounts = {};
+            tasks.forEach(t => {
+                if (t.status !== 'เสร็จแล้ว') {
+                    subjectCounts[t.subject] = (subjectCounts[t.subject] || 0) + 1;
+                }
+            });
+
+            let summaryText = 'งานค้างแยกตามรายวิชา: ';
+            const subjectEntries = Object.entries(subjectCounts);
+            if (subjectEntries.length > 0) {
+                summaryText += subjectEntries.map(([subj, count]) => `${subj} (${count})`).join(', ');
+            } else {
+                summaryText += 'ไม่มีงานค้าง เยี่ยมมาก!';
+            }
+            document.getElementById('subjectSummary').textContent = summaryText;
+        }
+
+        // ฟังก์ชันจัดรูปแบบวันที่ให้อ่านง่าย (เช่น 15 ต.ค. 2026)
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('th-TH', options);
+        }
+
+        // ฟังก์ชันป้องกัน XSS เบื้องต้น
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+    </script>
+</body>
+</html>
